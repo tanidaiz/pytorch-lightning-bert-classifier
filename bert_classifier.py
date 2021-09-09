@@ -25,6 +25,7 @@ def get_args():
     parser.add_argument('--batch_size', help='batch size for train, valid, test', type=int, default=1)
     parser.add_argument('--num_workers', help='total count of threads for DataLoader', type=int, default=1)
     parser.add_argument('--learning_rate', help='learning rate for BERT training', type=float, default=1e-3)
+    parser.add_argument('--fp16', help='half precision', action='store_true')
     
     args = parser.parse_args()
     
@@ -119,7 +120,8 @@ def main():
         data_loader[datatype] = DataLoader(dataset[datatype], args.batch_size, num_workers=args.num_workers, collate_fn=dataset[datatype].collate)
     
     classifier = BERTClassifier(args)
-    trainer = pl.Trainer(gpus=args.gpu_count, precision=32, accelerator="ddp")
+    precision = 16 if args.fp16 else 32
+    trainer = pl.Trainer(gpus=args.gpu_count, precision=precision, accelerator="ddp")
     trainer.fit(classifier, data_loader['train'], data_loader['valid'])
 
 if __name__ == '__main__':
